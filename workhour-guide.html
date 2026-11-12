@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工時調整與出差/請假判斷指南</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts TC -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans TC"', 'Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .fade-in {
+            animation: fadeIn 0.25s ease-in-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <!-- Header / Navbar -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-xl shadow-md">
+                    <i class="fa-solid fa-business-time"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-slate-900 leading-tight">工時調整與出差/請假判斷指南</h1>
+                    <p class="text-xs text-slate-500">同仁出差請假工時處置與計畫代號檢索系統</p>
+                </div>
+            </div>
+            
+            <!-- Quick Principle Alert -->
+            <div class="flex items-center space-x-2 bg-amber-50 border border-amber-200 text-amber-900 text-xs px-3.5 py-2 rounded-xl shadow-sm">
+                <i class="fa-solid fa-lightbulb text-amber-600 text-sm"></i>
+                <span>填報原則：優先使用<strong>有期限之交換工時</strong>，最後再使用跨年度計畫</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow w-full">
+        
+        <!-- Navigation Tabs -->
+        <div class="flex flex-wrap border-b border-slate-200 mb-6 gap-1 sm:gap-2">
+            <button onclick="switchTab('business-trip')" id="tab-business-trip" class="tab-btn px-4 py-3 font-medium text-sm rounded-t-xl transition flex items-center space-x-2 border-b-2 border-blue-600 text-blue-600 bg-white">
+                <i class="fa-solid fa-plane-departure"></i>
+                <span>出差判斷</span>
+            </button>
+            <button onclick="switchTab('leave')" id="tab-leave" class="tab-btn px-4 py-3 font-medium text-sm rounded-t-xl transition flex items-center space-x-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100">
+                <i class="fa-solid fa-calendar-xmark"></i>
+                <span>請假判斷</span>
+            </button>
+            <button onclick="switchTab('projects')" id="tab-projects" class="tab-btn px-4 py-3 font-medium text-sm rounded-t-xl transition flex items-center space-x-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100">
+                <i class="fa-solid fa-table-list"></i>
+                <span>交換工時與計畫代號</span>
+            </button>
+            <button onclick="switchTab('overview')" id="tab-overview" class="tab-btn px-4 py-3 font-medium text-sm rounded-t-xl transition flex items-center space-x-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100">
+                <i class="fa-solid fa-sitemap"></i>
+                <span>全景流程圖與原則</span>
+            </button>
+        </div>
+
+        <!-- Section 1: Business Trip Wizard -->
+        <section id="section-business-trip" class="tab-content fade-in">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Interactive Wizard Card -->
+                <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between pb-4 mb-6 border-b border-slate-100">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                                出差工時判斷流程
+                            </span>
+                            <span id="trip-step-indicator" class="text-xs text-slate-400 font-medium">問題 1 / 4</span>
+                        </div>
+
+                        <!-- Dynamic Quiz Slot -->
+                        <div id="trip-quiz-container"></div>
+                    </div>
+
+                    <!-- Footer Controls -->
+                    <div class="mt-8 pt-4 border-t border-slate-100 flex justify-between items-center">
+                        <button onclick="resetTripQuiz()" class="text-xs font-medium text-slate-500 hover:text-slate-800 transition flex items-center space-x-1">
+                            <i class="fa-solid fa-rotate-right"></i>
+                            <span>重新檢測</span>
+                        </button>
+                        <div class="text-xs text-slate-400">依據 Q1~Q4 順序核對</div>
+                    </div>
+                </div>
+
+                <!-- Guidance Info Box -->
+                <div class="space-y-6">
+                    <div class="bg-gradient-to-br from-blue-900 to-indigo-900 text-white rounded-2xl p-6 shadow-md">
+                        <h3 class="text-lg font-bold mb-2 flex items-center space-x-2">
+                            <i class="fa-solid fa-circle-question text-sky-300"></i>
+                            <span>出差工時處置說明</span>
+                        </h3>
+                        <p class="text-xs text-blue-100 leading-relaxed mb-4">
+                            當日若預定為不可出差之計畫工時（包含交換工時或部門計畫），均必須將該工時往後調整至該計畫結案前（目前統一結案期限為 <strong>116/12/31</strong>）完成，出差當日則更換為可報銷出差之計畫代號。
+                        </p>
+                        <div class="space-y-2 text-xs text-blue-200">
+                            <div class="flex items-start space-x-2">
+                                <i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>
+                                <span>交換工時檢測優先於部門計畫</span>
+                            </div>
+                            <div class="flex items-start space-x-2">
+                                <i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>
+                                <span>工時往後調整不得越過計畫使用期限（116/12/31）</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                        <h4 class="font-bold text-slate-800 text-xs uppercase tracking-wider mb-3 text-slate-400">快速提示</h4>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            如果不確定您的計畫代號是否屬於「可出差」，可先前往「交換工時與計畫代號」頁籤進行查詢與帶入。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Leave Wizard -->
+        <section id="section-leave" class="tab-content hidden fade-in">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Interactive Wizard Card -->
+                <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between pb-4 mb-6 border-b border-slate-100">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">
+                                請假工時判斷流程
+                            </span>
+                            <span id="leave-step-indicator" class="text-xs text-slate-400 font-medium">問題 1 / 2</span>
+                        </div>
+
+                        <!-- Dynamic Quiz Slot -->
+                        <div id="leave-quiz-container"></div>
+                    </div>
+
+                    <!-- Footer Controls -->
+                    <div class="mt-8 pt-4 border-t border-slate-100 flex justify-between items-center">
+                        <button onclick="resetLeaveQuiz()" class="text-xs font-medium text-slate-500 hover:text-slate-800 transition flex items-center space-x-1">
+                            <i class="fa-solid fa-rotate-right"></i>
+                            <span>重新檢測</span>
+                        </button>
+                        <div class="text-xs text-slate-400">依據 Q1~Q2 順序核對</div>
+                    </div>
+                </div>
+
+                <!-- Guidance Info Box -->
+                <div class="space-y-6">
+                    <div class="bg-gradient-to-br from-emerald-800 to-teal-900 text-white rounded-2xl p-6 shadow-md">
+                        <h3 class="text-lg font-bold mb-2 flex items-center space-x-2">
+                            <i class="fa-solid fa-circle-info text-emerald-300"></i>
+                            <span>請假工時處置說明</span>
+                        </h3>
+                        <p class="text-xs text-teal-100 leading-relaxed mb-4">
+                            交換工時通常有明確結案期限（目前統一為 <strong>116/12/31</strong>），請假當天若排定為交換工時，不可直接沖銷，應將工時往後遞延至結案前執行。
+                        </p>
+                        <div class="space-y-2 text-xs text-teal-200">
+                            <div class="flex items-start space-x-2">
+                                <i class="fa-solid fa-check text-teal-300 mt-0.5"></i>
+                                <span>交換工時：請假需往後調整工時至 116/12/31 前</span>
+                            </div>
+                            <div class="flex items-start space-x-2">
+                                <i class="fa-solid fa-check text-teal-300 mt-0.5"></i>
+                                <span>部門計畫：可直接請假報銷</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Project Codes Table -->
+        <section id="section-projects" class="tab-content hidden fade-in">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-6">
+                
+                <!-- Table Header & Filter -->
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-slate-100">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900 flex items-center space-x-2">
+                            <i class="fa-solid fa-list-check text-blue-600"></i>
+                            <span>交換工時與計畫代號一覽表</span>
+                        </h3>
+                        <p class="text-xs text-slate-500 mt-1">對照各計畫代號之使用期間（統一為 116/12/31）、出差權限與事由說明，點選按鈕可直接帶入試算</p>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+                        <!-- Search Bar -->
+                        <div class="relative w-full sm:w-64">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                            <input type="text" id="project-search" oninput="filterProjectTable()" placeholder="搜尋代號、期間或說明..." class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                        </div>
+
+                        <!-- Status Filter -->
+                        <select id="project-filter-status" onchange="filterProjectTable()" class="w-full sm:w-auto px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 transition font-medium text-slate-700">
+                            <option value="ALL">全部狀態</option>
+                            <option value="ALLOW">僅顯示可出差</option>
+                            <option value="DENY">僅顯示不可出差</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Table View -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100/80 text-slate-700 text-xs uppercase tracking-wider font-semibold border-b border-slate-200">
+                                <th class="p-3.5 rounded-tl-xl w-1/5">計畫代號</th>
+                                <th class="p-3.5 w-1/5">計畫使用期間</th>
+                                <th class="p-3.5 w-2/5">出差事由 / 限制狀態</th>
+                                <th class="p-3.5 rounded-tr-xl text-right w-1/5">快速試算</th>
+                            </tr>
+                        </thead>
+                        <tbody id="project-table-body" class="divide-y divide-slate-100 text-slate-700 text-xs">
+                            <!-- Injected dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="table-empty-msg" class="hidden text-center py-8 text-slate-400 text-xs">
+                    <i class="fa-solid fa-folder-open text-2xl mb-2 block"></i>
+                    查無符合條件的計畫代號
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Full Overview Flowchart & Principles -->
+        <section id="section-overview" class="tab-content hidden fade-in">
+            <div class="space-y-8">
+                
+                <!-- Guidelines Priority Box -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-6">
+                    <h3 class="text-lg font-bold text-slate-900 flex items-center space-x-2">
+                        <i class="fa-solid fa-layer-group text-blue-600"></i>
+                        <span>工時計畫使用優先順序原則</span>
+                    </h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Priority 1 Card -->
+                        <div class="p-6 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/80 relative overflow-hidden">
+                            <div class="absolute -right-3 -bottom-3 text-amber-200/40 text-8xl font-black select-none">1</div>
+                            <div class="flex items-center space-x-3 mb-3">
+                                <span class="w-7 h-7 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold text-xs">1</span>
+                                <h4 class="text-base font-bold text-amber-900">優先使用：交換工時計畫</h4>
+                            </div>
+                            <p class="text-xs text-amber-900/80 leading-relaxed mb-3">
+                                交換工時通常有特定的專案結案期限（目前統一為 <strong>116/12/31</strong>）與履約壓力，為避免時數過期失效，所有可搭配的工作內容應<strong>優先填報交換工時計畫</strong>。
+                            </p>
+                            <span class="inline-block px-2.5 py-1 bg-amber-100 text-amber-800 rounded-lg text-xs font-semibold">有期限限制（結案日 116/12/31）</span>
+                        </div>
+
+                        <!-- Priority 2 Card -->
+                        <div class="p-6 rounded-2xl bg-gradient-to-br from-slate-50 to-blue-50 border border-slate-200/80 relative overflow-hidden">
+                            <div class="absolute -right-3 -bottom-3 text-slate-200/60 text-8xl font-black select-none">2</div>
+                            <div class="flex items-center space-x-3 mb-3">
+                                <span class="w-7 h-7 rounded-full bg-slate-600 text-white flex items-center justify-center font-bold text-xs">2</span>
+                                <h4 class="text-base font-bold text-slate-900">最後使用：跨年度計畫</h4>
+                            </div>
+                            <p class="text-xs text-slate-700 leading-relaxed mb-3">
+                                跨年度計畫的時間跨度較大，彈性較高，應作為<strong>最後補充與備用工時資源</strong>。待短期/交換工時消耗完畢後再使用。
+                            </p>
+                            <span class="inline-block px-2.5 py-1 bg-slate-200 text-slate-800 rounded-lg text-xs font-semibold">長期備用資源</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Business Trip Flowchart -->
+                <div class="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm">
+                    <div class="flex items-center space-x-3 mb-6">
+                        <div class="p-2.5 bg-blue-100 text-blue-700 rounded-xl">
+                            <i class="fa-solid fa-plane"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-800">出差工時調整判斷全景圖</h3>
+                            <p class="text-xs text-slate-500">Q1 ~ Q4 決策樹邏輯</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="p-4 rounded-xl border border-slate-200 bg-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+                            <div>
+                                <span class="font-bold bg-blue-600 text-white px-2 py-0.5 rounded mr-2">Q1</span>
+                                <span class="font-semibold text-slate-800">該工時是否為「不可出差之交換工時」？</span>
+                            </div>
+                            <div class="flex items-center space-x-2 shrink-0">
+                                <span class="px-2.5 py-1 bg-amber-100 text-amber-800 rounded-lg font-medium">是 ➔ 往後調至結案前(116/12/31)，換用可出差代號</span>
+                                <span class="px-2.5 py-1 bg-slate-200 text-slate-700 rounded-lg font-medium">否 ➔ Q2</span>
+                            </div>
+                        </div>
+
+                        <div class="text-center text-slate-300 text-xs"><i class="fa-solid fa-arrow-down"></i></div>
+
+                        <div class="p-4 rounded-xl border border-slate-200 bg-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+                            <div>
+                                <span class="font-bold bg-blue-600 text-white px-2 py-0.5 rounded mr-2">Q2</span>
+                                <span class="font-semibold text-slate-800">該工時是否為「可出差之交換工時」？</span>
+                            </div>
+                            <div class="flex items-center space-x-2 shrink-0">
+                                <span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-lg font-medium">是 ➔ 可以出差</span>
+                                <span class="px-2.5 py-1 bg-slate-200 text-slate-700 rounded-lg font-medium">否 ➔ Q3</span>
+                            </div>
+                        </div>
+
+                        <div class="text-center text-slate-300 text-xs"><i class="fa-solid fa-arrow-down"></i></div>
+
+                        <div class="p-4 rounded-xl border border-slate-200 bg-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+                            <div>
+                                <span class="font-bold bg-blue-600 text-white px-2 py-0.5 rounded mr-2">Q3</span>
+                                <span class="font-semibold text-slate-800">該工時是否為「不可出差之部門計畫」？</span>
+                            </div>
+                            <div class="flex items-center space-x-2 shrink-0">
+                                <span class="px-2.5 py-1 bg-amber-100 text-amber-800 rounded-lg font-medium">是 ➔ 往後調至結案前(116/12/31)，換用可出差代號</span>
+                                <span class="px-2.5 py-1 bg-slate-200 text-slate-700 rounded-lg font-medium">否 ➔ Q4</span>
+                            </div>
+                        </div>
+
+                        <div class="text-center text-slate-300 text-xs"><i class="fa-solid fa-arrow-down"></i></div>
+
+                        <div class="p-4 rounded-xl border border-slate-200 bg-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+                            <div>
+                                <span class="font-bold bg-blue-600 text-white px-2 py-0.5 rounded mr-2">Q4</span>
+                                <span class="font-semibold text-slate-800">該工時是否為「可出差之部門計畫」？</span>
+                            </div>
+                            <div class="flex items-center space-x-2 shrink-0">
+                                <span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-lg font-medium">是 ➔ 可以出差</span>
+                                <span class="px-2.5 py-1 bg-slate-300 text-slate-800 rounded-lg font-medium">否 ➔ 流程結束 (END)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Leave Flowchart -->
+                <div class="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm">
+                    <div class="flex items-center space-x-3 mb-6">
+                        <div class="p-2.5 bg-emerald-100 text-emerald-700 rounded-xl">
+                            <i class="fa-solid fa-calendar-minus"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-800">請假工時調整判斷全景圖</h3>
+                            <p class="text-xs text-slate-500">Q1 ~ Q2 決策樹邏輯</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="p-4 rounded-xl border border-slate-200 bg-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+                            <div>
+                                <span class="font-bold bg-emerald-600 text-white px-2 py-0.5 rounded mr-2">Q1</span>
+                                <span class="font-semibold text-slate-800">該工時是否為「交換工時」？</span>
+                            </div>
+                            <div class="flex items-center space-x-2 shrink-0">
+                                <span class="px-2.5 py-1 bg-amber-100 text-amber-800 rounded-lg font-medium">是 ➔ 將原有工時往後調到該計畫結案前(116/12/31)</span>
+                                <span class="px-2.5 py-1 bg-slate-200 text-slate-700 rounded-lg font-medium">否 ➔ Q2</span>
+                            </div>
+                        </div>
+
+                        <div class="text-center text-slate-300 text-xs"><i class="fa-solid fa-arrow-down"></i></div>
+
+                        <div class="p-4 rounded-xl border border-slate-200 bg-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+                            <div>
+                                <span class="font-bold bg-emerald-600 text-white px-2 py-0.5 rounded mr-2">Q2</span>
+                                <span class="font-semibold text-slate-800">該工時是否為「部門計畫」？</span>
+                            </div>
+                            <div class="flex items-center space-x-2 shrink-0">
+                                <span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-lg font-medium">是 ➔ 可以請假</span>
+                                <span class="px-2.5 py-1 bg-slate-300 text-slate-800 rounded-lg font-medium">否 ➔ 流程結束 (END)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-6 right-6 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl flex items-center space-x-3 translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <i class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+        <span id="toast-message" class="text-xs font-medium">結果已成功複製到剪貼簿！</span>
+    </div>
+
+    <!-- JavaScript Data and Controller -->
+    <script>
+        // Project Code Database (With Plan Usage Period: 116/12/31)
+        const projectData = [
+            { code: "R365AA2200", period: "116/12/31", allowTrip: false, desc: "不可出差" },
+            { code: "R365AA2300", period: "116/12/31", allowTrip: false, desc: "不可出差" },
+            { code: "R453AG7110", period: "116/12/31", allowTrip: false, desc: "不可出差" },
+            { code: "R453AG3234", period: "116/12/31", allowTrip: true, desc: "赴OOO(廠商名稱)拜訪洽談智慧工具解決方案推動計畫，了解業界需求與建議" },
+            { code: "R353C71400", period: "116/12/31", allowTrip: false, desc: "不可出差" },
+            { code: "R352BA3200", period: "116/12/31", allowTrip: false, desc: "不可出差" },
+            { code: "R453AU6210", period: "116/12/31", allowTrip: false, desc: "不可出差" },
+            { code: "R453AU1110", period: "116/12/31", allowTrip: false, desc: "不可出差" },
+            { code: "R453AU1210", period: "116/12/31", allowTrip: false, desc: "不可出差" },
+            { code: "R101W5U000", period: "116/12/31", allowTrip: true, desc: "可出差" }
+        ];
+
+        // Question Rules - Business Trip
+        const tripQuestions = [
+            {
+                id: 1,
+                title: "Q1. 該工時是否為「不可出差之交換工時」？",
+                desc: "請確認您當日原預定填報之交換工時計畫，是否屬於禁止申請出差差旅費之項目。",
+                yesAction: {
+                    type: "RESULT",
+                    badge: "需往後調整工時與計畫代號",
+                    badgeClass: "bg-amber-100 text-amber-800 border-amber-300",
+                    title: "將原有工時往後調到該計畫結案前（116/12/31），並使用可以出差的計畫代號",
+                    detail: "由於該交換工時限制不可出差，請將原工時排程挪移至該計畫結案日（116/12/31）前的其他工作日，並將出差當天更換為支援出差之計畫代號。",
+                    copyText: "【出差工時處置】將原有不可出差之交換工時往後調到該計畫結案前（116/12/31），並使用可以出差的計畫代號。"
+                },
+                noAction: { type: "NEXT", nextId: 2 }
+            },
+            {
+                id: 2,
+                title: "Q2. 該工時是否為「可出差之交換工時」？",
+                desc: "請確認您當日預定填報之交換工時計畫，是否具備出差報銷資格。",
+                yesAction: {
+                    type: "RESULT",
+                    badge: "可直接出差",
+                    badgeClass: "bg-emerald-100 text-emerald-800 border-emerald-300",
+                    title: "可以出差",
+                    detail: "該交換工時可支援出差報銷，您可以直接以該計畫代號辦理出差與工時填報（請注意使用期限至 116/12/31 止）。",
+                    copyText: "【出差工時處置】符合可出差之交換工時，可以出差。"
+                },
+                noAction: { type: "NEXT", nextId: 3 }
+            },
+            {
+                id: 3,
+                title: "Q3. 該工時是否為「不可出差之部門計畫」？",
+                desc: "請確認您當日預定填報之部門計畫，是否屬於不可申報出差之類別。",
+                yesAction: {
+                    type: "RESULT",
+                    badge: "需往後調整工時與計畫代號",
+                    badgeClass: "bg-amber-100 text-amber-800 border-amber-300",
+                    title: "將原有工時往後調到該計畫結案前（116/12/31），並使用可以出差的計畫代號",
+                    detail: "原部門計畫不支援出差，請將原計畫工時延後至結案日（116/12/31）前完成，並在出差當天使用其他可出差之計畫代號。",
+                    copyText: "【出差工時處置】將原有不可出差之部門計畫工時往後調到該計畫結案前（116/12/31），並使用可以出差的計畫代號。"
+                },
+                noAction: { type: "NEXT", nextId: 4 }
+            },
+            {
+                id: 4,
+                title: "Q4. 該工時是否為「可出差之部門計畫」？",
+                desc: "請確認您當日預定填報之部門計畫，是否為可出差類別。",
+                yesAction: {
+                    type: "RESULT",
+                    badge: "可直接出差",
+                    badgeClass: "bg-emerald-100 text-emerald-800 border-emerald-300",
+                    title: "可以出差",
+                    detail: "該部門計畫支援出差，無須挪移工時或更換計畫代號。",
+                    copyText: "【出差工時處置】符合可出差之部門計畫，可以出差。"
+                },
+                noAction: {
+                    type: "RESULT",
+                    badge: "不適用 / 流程結束",
+                    badgeClass: "bg-slate-200 text-slate-700 border-slate-300",
+                    title: "非屬上述常見計畫類型，請聯繫主管或 PM 確認",
+                    detail: "您選擇的工時項目不屬於標準交換工時或部門計畫，請尋求專案管理單位協助判斷。",
+                    copyText: "【出差工時處置】非屬標準交換或部門計畫，需聯繫主管確認。"
+                }
+            }
+        ];
+
+        // Question Rules - Leave
+        const leaveQuestions = [
+            {
+                id: 1,
+                title: "Q1. 該工時是否為「交換工時」？",
+                desc: "請確認請假當天原本排定的工時，是否為具有履約期限之交換工時（結案期限 116/12/31）。",
+                yesAction: {
+                    type: "RESULT",
+                    badge: "需往後調整工時",
+                    badgeClass: "bg-amber-100 text-amber-800 border-amber-300",
+                    title: "將原有工時往後調到該計畫結案前（116/12/31）",
+                    detail: "交換工時具有專案時效性，請假當天的交換工時不可直接沖抵，必須挪移至該計畫結案日（116/12/31）前之其他工作日補足。",
+                    copyText: "【請假工時處置】請假當日為交換工時，須將原有工時往後調到該計畫結案前（116/12/31）。"
+                },
+                noAction: { type: "NEXT", nextId: 2 }
+            },
+            {
+                id: 2,
+                title: "Q2. 該工時是否為「部門計畫」？",
+                desc: "請確認請假當天原本預定填報之工時是否為一般部門計畫。",
+                yesAction: {
+                    type: "RESULT",
+                    badge: "可直接請假",
+                    badgeClass: "bg-emerald-100 text-emerald-800 border-emerald-300",
+                    title: "可以請假",
+                    detail: "部門計畫工時可正常搭配假別請假，無須另外往後遞延工時。",
+                    copyText: "【請假工時處置】屬於部門計畫，可以正常辦理請假。"
+                },
+                noAction: {
+                    type: "RESULT",
+                    badge: "不適用 / 流程結束",
+                    badgeClass: "bg-slate-200 text-slate-700 border-slate-300",
+                    title: "非屬上述計畫類型，請與單位主管確認",
+                    detail: "若非交換工時亦非部門計畫，請尋求主管確認該工時之請假申報方式。",
+                    copyText: "【請假工時處置】非屬標準交換或部門計畫，需諮詢管理單位。"
+                }
+            }
+        ];
+
+        // Global State
+        let currentTripStep = 1;
+        let currentLeaveStep = 1;
+
+        // On Load Init
+        document.addEventListener('DOMContentLoaded', () => {
+            renderTripQuestion(currentTripStep);
+            renderLeaveQuestion(currentLeaveStep);
+            renderProjectTable(projectData);
+        });
+
+        // Tab Switch Controller
+        function switchTab(tabKey) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('border-blue-600', 'text-blue-600', 'bg-white');
+                btn.classList.add('border-transparent', 'text-slate-500');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+
+            const selectedTab = document.getElementById(`tab-${tabKey}`);
+            const selectedSection = document.getElementById(`section-${tabKey}`);
+
+            if (selectedTab && selectedSection) {
+                selectedTab.classList.remove('border-transparent', 'text-slate-500');
+                selectedTab.classList.add('border-blue-600', 'text-blue-600', 'bg-white');
+                selectedSection.classList.remove('hidden');
+            }
+        }
+
+        // Render Business Trip Quiz Page
+        function renderTripQuestion(stepId) {
+            const container = document.getElementById('trip-quiz-container');
+            const indicator = document.getElementById('trip-step-indicator');
+            indicator.textContent = `問題 ${stepId} / ${tripQuestions.length}`;
+
+            const q = tripQuestions.find(item => item.id === stepId);
+            if (!q) return;
+
+            container.innerHTML = `
+                <div class="fade-in space-y-6">
+                    <div>
+                        <h2 class="text-xl sm:text-2xl font-bold text-slate-900 mb-2">${q.title}</h2>
+                        <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">${q.desc}</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                        <button onclick="handleTripAnswer(${q.id}, true)" class="p-5 rounded-2xl border-2 border-slate-200 hover:border-blue-600 hover:bg-blue-50/50 transition flex items-center justify-between group text-left">
+                            <div>
+                                <div class="font-bold text-slate-800 group-hover:text-blue-600 text-base">是 (Yes)</div>
+                                <div class="text-xs text-slate-500">符合此條件</div>
+                            </div>
+                            <div class="w-8 h-8 rounded-full bg-slate-100 group-hover:bg-blue-600 group-hover:text-white flex items-center justify-center transition text-sm">
+                                <i class="fa-solid fa-check"></i>
+                            </div>
+                        </button>
+
+                        <button onclick="handleTripAnswer(${q.id}, false)" class="p-5 rounded-2xl border-2 border-slate-200 hover:border-slate-400 hover:bg-slate-100/50 transition flex items-center justify-between group text-left">
+                            <div>
+                                <div class="font-bold text-slate-800 text-base">否 (No)</div>
+                                <div class="text-xs text-slate-500">不符合，檢查下一項</div>
+                            </div>
+                            <div class="w-8 h-8 rounded-full bg-slate-100 group-hover:bg-slate-400 group-hover:text-white flex items-center justify-center transition text-sm">
+                                <i class="fa-solid fa-xmark"></i>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function handleTripAnswer(stepId, isYes) {
+            const q = tripQuestions.find(item => item.id === stepId);
+            const action = isYes ? q.yesAction : q.noAction;
+
+            if (action.type === "NEXT") {
+                currentTripStep = action.nextId;
+                renderTripQuestion(currentTripStep);
+            } else if (action.type === "RESULT") {
+                renderTripResult(action);
+            }
+        }
+
+        function renderTripResult(result) {
+            const container = document.getElementById('trip-quiz-container');
+            const indicator = document.getElementById('trip-step-indicator');
+            indicator.textContent = `判定完成`;
+
+            container.innerHTML = `
+                <div class="fade-in space-y-6">
+                    <div class="inline-block px-3 py-1 rounded-full text-xs font-bold border ${result.badgeClass}">
+                        ${result.badge}
+                    </div>
+                    <div>
+                        <h2 class="text-xl sm:text-2xl font-bold text-slate-900 mb-3">${result.title}</h2>
+                        <p class="text-xs sm:text-sm text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-200">${result.detail}</p>
+                    </div>
+
+                    <div class="pt-2">
+                        <button onclick="copyToClipboard('${escapeJsString(result.copyText)}')" class="w-full sm:w-auto px-5 py-3 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition font-medium text-xs sm:text-sm flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-copy"></i>
+                            <span>複製處置指示文字</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function resetTripQuiz() {
+            currentTripStep = 1;
+            renderTripQuestion(currentTripStep);
+        }
+
+        // Render Leave Quiz Page
+        function renderLeaveQuestion(stepId) {
+            const container = document.getElementById('leave-quiz-container');
+            const indicator = document.getElementById('leave-step-indicator');
+            indicator.textContent = `問題 ${stepId} / ${leaveQuestions.length}`;
+
+            const q = leaveQuestions.find(item => item.id === stepId);
+            if (!q) return;
+
+            container.innerHTML = `
+                <div class="fade-in space-y-6">
+                    <div>
+                        <h2 class="text-xl sm:text-2xl font-bold text-slate-900 mb-2">${q.title}</h2>
+                        <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">${q.desc}</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                        <button onclick="handleLeaveAnswer(${q.id}, true)" class="p-5 rounded-2xl border-2 border-slate-200 hover:border-emerald-600 hover:bg-emerald-50/50 transition flex items-center justify-between group text-left">
+                            <div>
+                                <div class="font-bold text-slate-800 group-hover:text-emerald-600 text-base">是 (Yes)</div>
+                                <div class="text-xs text-slate-500">符合此條件</div>
+                            </div>
+                            <div class="w-8 h-8 rounded-full bg-slate-100 group-hover:bg-emerald-600 group-hover:text-white flex items-center justify-center transition text-sm">
+                                <i class="fa-solid fa-check"></i>
+                            </div>
+                        </button>
+
+                        <button onclick="handleLeaveAnswer(${q.id}, false)" class="p-5 rounded-2xl border-2 border-slate-200 hover:border-slate-400 hover:bg-slate-100/50 transition flex items-center justify-between group text-left">
+                            <div>
+                                <div class="font-bold text-slate-800 text-base">否 (No)</div>
+                                <div class="text-xs text-slate-500">不符合，檢查下一項</div>
+                            </div>
+                            <div class="w-8 h-8 rounded-full bg-slate-100 group-hover:bg-slate-400 group-hover:text-white flex items-center justify-center transition text-sm">
+                                <i class="fa-solid fa-xmark"></i>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function handleLeaveAnswer(stepId, isYes) {
+            const q = leaveQuestions.find(item => item.id === stepId);
+            const action = isYes ? q.yesAction : q.noAction;
+
+            if (action.type === "NEXT") {
+                currentLeaveStep = action.nextId;
+                renderLeaveQuestion(currentLeaveStep);
+            } else if (action.type === "RESULT") {
+                renderLeaveResult(action);
+            }
+        }
+
+        function renderLeaveResult(result) {
+            const container = document.getElementById('leave-quiz-container');
+            const indicator = document.getElementById('leave-step-indicator');
+            indicator.textContent = `判定完成`;
+
+            container.innerHTML = `
+                <div class="fade-in space-y-6">
+                    <div class="inline-block px-3 py-1 rounded-full text-xs font-bold border ${result.badgeClass}">
+                        ${result.badge}
+                    </div>
+                    <div>
+                        <h2 class="text-xl sm:text-2xl font-bold text-slate-900 mb-3">${result.title}</h2>
+                        <p class="text-xs sm:text-sm text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-200">${result.detail}</p>
+                    </div>
+
+                    <div class="pt-2">
+                        <button onclick="copyToClipboard('${escapeJsString(result.copyText)}')" class="w-full sm:w-auto px-5 py-3 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition font-medium text-xs sm:text-sm flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-copy"></i>
+                            <span>複製處置指示文字</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function resetLeaveQuiz() {
+            currentLeaveStep = 1;
+            renderLeaveQuestion(currentLeaveStep);
+        }
+
+        // Render Project Code Table
+        function renderProjectTable(data) {
+            const tbody = document.getElementById('project-table-body');
+            const emptyMsg = document.getElementById('table-empty-msg');
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                emptyMsg.classList.remove('hidden');
+                return;
+            } else {
+                emptyMsg.classList.add('hidden');
+            }
+
+            data.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50/80 transition";
+
+                const badgeHtml = item.allowTrip 
+                    ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200"><i class="fa-solid fa-circle-check mr-1 text-emerald-600"></i>可出差</span>`
+                    : `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200"><i class="fa-solid fa-ban mr-1 text-slate-400"></i>不可出差</span>`;
+
+                tr.innerHTML = `
+                    <td class="p-3.5 font-bold font-mono text-slate-900 text-xs sm:text-sm">${item.code}</td>
+                    <td class="p-3.5 font-medium text-slate-700 text-xs">${item.period}</td>
+                    <td class="p-3.5 space-y-1">
+                        <div>${badgeHtml}</div>
+                        <div class="text-slate-600 text-xs mt-1 leading-relaxed">${item.desc}</div>
+                    </td>
+                    <td class="p-3.5 text-right">
+                        <button onclick="applyProjectToWizard('${item.code}', ${item.allowTrip})" class="px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white rounded-xl transition text-xs font-medium inline-flex items-center space-x-1">
+                            <span>帶入試算</span>
+                            <i class="fa-solid fa-arrow-right text-xs"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Filter Table Handler
+        function filterProjectTable() {
+            const searchKeyword = document.getElementById('project-search').value.toLowerCase().trim();
+            const statusFilter = document.getElementById('project-filter-status').value;
+
+            const filtered = projectData.filter(item => {
+                const matchesSearch = item.code.toLowerCase().includes(searchKeyword) || item.desc.toLowerCase().includes(searchKeyword) || item.period.toLowerCase().includes(searchKeyword);
+                let matchesStatus = true;
+                if (statusFilter === "ALLOW") matchesStatus = item.allowTrip === true;
+                if (statusFilter === "DENY") matchesStatus = item.allowTrip === false;
+
+                return matchesSearch && matchesStatus;
+            });
+
+            renderProjectTable(filtered);
+        }
+
+        // Auto Apply Project to Quiz Wizard
+        function applyProjectToWizard(code, allowTrip) {
+            switchTab('business-trip');
+            resetTripQuiz();
+
+            if (!allowTrip) {
+                // If Cannot Trip => Q1 Yes
+                handleTripAnswer(1, true);
+            } else {
+                // If Allow Trip => Q1 No -> Q2 Yes
+                handleTripAnswer(1, false);
+                setTimeout(() => {
+                    handleTripAnswer(2, true);
+                }, 100);
+            }
+
+            showToast(`已將代號 ${code}（使用期間 116/12/31）自動帶入出差判斷！`);
+        }
+
+        // Utilities
+        function escapeJsString(str) {
+            return str.replace(/'/g, "\\'").replace(/"/g, '\\"');
+        }
+
+        function copyToClipboard(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            
+            try {
+                document.execCommand('copy');
+                showToast('處置指示已成功複製至剪貼簿！');
+            } catch (err) {
+                showToast('複製失敗，請手動複製');
+            } finally {
+                document.body.removeChild(textarea);
+            }
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-message');
+            toastMsg.textContent = msg;
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
